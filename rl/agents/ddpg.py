@@ -87,8 +87,7 @@ class DDPGAgent(Agent):
         super(DDPGAgent, self).__init__(**kwargs)
 
         # Get placeholders
-        self.state = env.state
-        self.action = env.action
+        self.variables = env.variables
 
         # Parameters.
         self.nb_actions = nb_actions
@@ -162,7 +161,7 @@ class DDPGAgent(Agent):
         # Clip the critic gradient using the huber loss
         critic_loss = K.mean(
             huber_loss(
-                self.critic([self.state, self.action]), self.critic_target,
+                self.critic([self.variables.state, self.variables.action]), self.critic_target,
                 self.delta_clip))
         critic_gradient_vars = critic_optimizer.compute_gradients(
             critic_loss, var_list=self.critic.trainable_weights)
@@ -195,7 +194,7 @@ class DDPGAgent(Agent):
         # Be careful to negate the gradient
         # Since the optimizer wants to minimize the value
         actor_loss = -tf.reduce_mean(
-            self.critic([self.state, self.actor(self.state)]))
+            self.critic([self.variables.state, self.actor(self.variables.state)]))
 
         actor_gradient_vars = actor_optimizer.compute_gradients(
             actor_loss, var_list=self.actor.trainable_weights)
@@ -304,8 +303,8 @@ class DDPGAgent(Agent):
         # We get a batch of 1 action
         # action = self.actor.predict_on_batch(batch_state)[0]
         action = self.session.run(
-            self.actor(self.state),
-            feed_dict={self.state: batch_state,
+            self.actor(self.variables.state),
+            feed_dict={self.variables.state: batch_state,
                        K.learning_phase(): 0})[0]
         assert action.shape == (self.nb_actions, )
 
@@ -435,8 +434,8 @@ class DDPGAgent(Agent):
             target_actions = self.target_actor.predict_on_batch(batch.state_1)
         else:
             target_actions = self.session.run(
-                self.target_actor(self.state),
-                feed_dict={self.state: batch.state_1,
+                self.target_actor(self.variables.state),
+                feed_dict={self.variables.state: batch.state_1,
                            K.learning_phase(): 0})
         assert target_actions.shape == (self.batch_size, self.nb_actions)
 
@@ -447,10 +446,10 @@ class DDPGAgent(Agent):
                 [batch.state_1, target_actions]).flatten()
         else:
             target_q_values = self.session.run(
-                self.target_critic([self.state, self.action]),
+                self.target_critic([self.variables.state, self.variables.action]),
                 feed_dict={
-                    self.state: batch.state_1,
-                    self.action: target_actions
+                    self.variables.state: batch.state_1,
+                    self.variables.action: target_actions
                 }).flatten()
 
         # Also works
@@ -471,8 +470,8 @@ class DDPGAgent(Agent):
             _, metrics = self.session.run(
                 [self.critic_train_fn, self.critic_summaries],
                 feed_dict={
-                    self.state: batch.state_0,
-                    self.action: batch.action,
+                    self.variables.state: batch.state_0,
+                    self.variables.action: batch.action,
                     self.critic_target: critic_targets
                 })
 
@@ -495,7 +494,7 @@ class DDPGAgent(Agent):
             # FIXME: metrics collection won't work with more than one iteration
             _, metrics = self.session.run(
                 [self.actor_train_fn, self.actor_summaries],
-                feed_dict={self.state: batch.state_0,
+                feed_dict={self.variables.state: batch.state_0,
                            K.learning_phase(): 1})
 
         return (metrics)

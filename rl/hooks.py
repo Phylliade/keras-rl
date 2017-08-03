@@ -19,13 +19,13 @@ class Hook:
 
     @property
     def count(self):
-        return(self.agent.episode)
+        return(self.agent.state.episode)
 
 
 class PortraitHook(Hook):
     # TODO: Move this hook to a non-blocking thread
     def __call__(self):
-        if self.agent.done:
+        if self.agent.state.done:
             if self.agent.training:
                 file_name = "portrait"
             else:
@@ -48,11 +48,11 @@ class TensorboardHook(Hook):
 
     def __call__(self):
         # Step summaries
-        for summary in self.agent.step_summaries:
+        for summary in self.agent.state.step_summaries:
             # FIXME: Use only one summary
-            self.summary_writer.add_summary(summary, self.agent.step)
+            self.summary_writer.add_summary(summary, self.agent.state.step)
 
         # Episode summaries
-        if self.agent.done:
-            episode_summary = tf.Summary(value=[tf.Summary.Value(tag="episode_reward", simple_value=self.agent.episode_reward), ])
-            self.summary_writer.add_summary(episode_summary, self.agent.episode)
+        if self.agent.state.done:
+            episode_summary = tf.Summary(value=[tf.Summary.Value(tag="episode_reward", simple_value=self.agent.state.episode_reward), ])
+            self.summary_writer.add_summary(episode_summary, self.agent.state.episode)
