@@ -3,6 +3,11 @@ This is a generic, easy to use, and keras-compatible deep RL framework.
 
 It began as a fork of [keras-rl](https://github.com/matthiasplappert/keras-rl) but is now a separated project.
 
+# WARNING
+This repository points to an **OLDER** version of Vinci, the latest one can be found at:
+
+https://github.com/Phylliade/vinci
+
 # Features
 
 * Define your Deep Nets using Keras
